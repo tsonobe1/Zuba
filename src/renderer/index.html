@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickCut</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="toolbar">
+      <div class="brand">QuickCut</div>
+      <button id="chooseFileBtn" class="primary">動画を開く</button>
+    </header>
+
+    <main class="workspace">
+      <section class="viewer-panel">
+        <div class="drop-zone" id="dropZone">
+          <video id="previewVideo" controls></video>
+          <div class="subtitle-overlay" id="subtitleOverlay"></div>
+          <div class="drop-hint" id="dropHint">
+            ここに動画をドロップ / Ctrl+V で貼り付け / ボタンから選択
+          </div>
+        </div>
+        <div class="video-track-section">
+          <div class="video-track-header">
+            <div>動画タイムライン</div>
+            <div class="video-track-duration">
+              <span id="videoTrackStart">0.00s</span>
+              <span>〜</span>
+              <span id="videoTrackEnd">0.00s</span>
+            </div>
+          </div>
+          <div class="video-track" id="videoTrack">
+            <div class="video-track-empty" id="videoTrackEmpty">Enterキー、または「この位置でカット」で分割を始めましょう</div>
+            <div class="video-playhead" id="videoPlayhead"></div>
+          </div>
+        </div>
+        <div class="edit-bar" id="editBar">
+          <div class="edit-bar-left">
+            <button id="addCutBtn" class="ghost">この位置でカット</button>
+            <button id="deleteCutBtn" class="ghost">選択カットを削除</button>
+            <button id="addSubtitleBtn" class="ghost">字幕を追加</button>
+            <button id="undoBtn" class="ghost" disabled>元に戻す</button>
+            <button id="redoBtn" class="ghost" disabled>やり直す</button>
+          </div>
+          <div class="edit-bar-right">
+            <div class="edit-bar-hint">Enter/Delete のショートカットも使用できます</div>
+            <button id="exportCutsBtn" class="primary">書き出し</button>
+            <span id="exportStatus" class="export-status"></span>
+             <button id="openExportBtn" class="ghost small" disabled>再生</button>
+          </div>
+        </div>
+        <div class="subtitle-track-section">
+          <div class="subtitle-track-header">
+            <div>字幕タイムライン (ドラッグ＆ドロップで移動)</div>
+            <div class="subtitle-track-duration">
+              <span id="subtitleTrackStart">0.00s</span>
+              <span>〜</span>
+              <span id="subtitleTrackEnd">0.00s</span>
+            </div>
+          </div>
+          <div class="subtitle-track" id="subtitleTrack">
+            <div class="subtitle-track-empty" id="subtitleTrackEmpty">動画を読み込むと字幕がここに表示されます</div>
+          </div>
+        </div>
+        <div class="playback-info">
+          <div>現在位置: <span id="currentTime">0.00s</span></div>
+          <div>総時間: <span id="duration">0.00s</span></div>
+          <div>ファイル: <span id="videoName">未選択</span></div>
+        </div>
+      </section>
+
+      <section class="editor-panel">
+        <div class="panel-block">
+          <h2>カット (Enterで追加 / Deleteで削除)</h2>
+          <ul id="cutList" class="list"></ul>
+          <div class="list-hint">クリックで選択し、Deleteで削除</div>
+        </div>
+
+        <div class="panel-block">
+          <h2>字幕</h2>
+          <form id="subtitleForm" class="subtitle-form">
+            <label>テキスト
+              <textarea id="subtitleText" rows="2" placeholder="字幕テキスト"></textarea>
+            </label>
+            <label>開始秒
+              <input type="number" id="subtitleStart" step="0.01" min="0" inputmode="decimal" />
+            </label>
+            <label>終了秒
+              <input type="number" id="subtitleEnd" step="0.01" min="0" inputmode="decimal" />
+            </label>
+            <div class="style-row">
+              <label>文字色
+                <input type="color" id="fontColor" value="#ffffff" />
+              </label>
+              <label>背景色
+                <input type="color" id="bgColor" value="#222222" />
+              </label>
+            </div>
+            <div class="style-row">
+              <label>フォント
+                <select id="fontFamily">
+                  <option value="'Noto Sans JP', sans-serif">Noto Sans JP</option>
+                  <option value="'Yu Gothic', sans-serif">Yu Gothic</option>
+                  <option value="'Meiryo', sans-serif">Meiryo</option>
+                  <option value="'Roboto', sans-serif">Roboto</option>
+                  <option value="'Helvetica', sans-serif">Helvetica</option>
+                  <option value="'Arial', sans-serif">Arial</option>
+                </select>
+              </label>
+              <label>文字サイズ (px)
+                <input type="number" id="fontSize" min="8" max="96" value="28" />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="primary">字幕を追加/更新</button>
+              <button type="button" id="clearSubtitleForm">クリア</button>
+            </div>
+          </form>
+          <ul id="subtitleList" class="list"></ul>
+          <div class="list-hint">クリックで編集対象にします</div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <input type="file" id="hiddenFileInput" class="hidden" accept="video/*" />
+  <script src="renderer.js" type="module"></script>
+</body>
+</html>

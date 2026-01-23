@@ -1,4 +1,4 @@
-import type { QuickCutAPI, SegmentRange } from '../types/quickcut';
+import type { ZubaAPI, SegmentRange } from '../types/zuba';
 import {
   buildSubtitleEntry,
   findActiveSubtitle,
@@ -84,7 +84,7 @@ const state: AppState = {
 };
 
 let objectUrl: string | null = null;
-const quickCutAPI: QuickCutAPI | undefined = window.quickCutAPI;
+const zubaAPI: ZubaAPI | undefined = window.zubaAPI;
 let overlayEditingId: string | null = null;
 
 const defaultStyles: SubtitleStyles = {
@@ -382,9 +382,9 @@ const openVideoFromFile = (file: File) => {
 };
 
 const openVideoFromPath = (filePath: string) => {
-  if (!filePath || !quickCutAPI?.pathToFileUrl) return;
+  if (!filePath || !zubaAPI?.pathToFileUrl) return;
   cleanupObjectUrl();
-  const fileUrl = quickCutAPI.pathToFileUrl(filePath);
+  const fileUrl = zubaAPI.pathToFileUrl(filePath);
   if (!fileUrl) return;
   state.videoName = filePath.split(/[/\\]/).pop() ?? 'Untitled';
   state.videoPath = filePath;
@@ -397,7 +397,7 @@ const handleFiles = (fileList: FileList | null) => {
   const fileArray = Array.from(fileList);
   const file = fileArray.find((f) => f.type.startsWith('video')) ?? fileArray[0];
   const fileWithPath = file as File & { path?: string };
-  if (fileWithPath.path && quickCutAPI?.pathToFileUrl) {
+  if (fileWithPath.path && zubaAPI?.pathToFileUrl) {
     openVideoFromPath(fileWithPath.path);
   } else {
     openVideoFromFile(file);
@@ -599,7 +599,7 @@ const deleteSelectedSegment = () => {
 };
 
 const exportCuts = async () => {
-  if (!quickCutAPI?.exportCuts) {
+  if (!zubaAPI?.exportCuts) {
     setExportStatus('書き出し機能が利用できません', 'error');
     return;
   }
@@ -625,7 +625,7 @@ const exportCuts = async () => {
       videoWidth,
       videoHeight
     });
-    const result = await quickCutAPI.exportCuts({
+    const result = await zubaAPI.exportCuts({
       sourcePath: state.videoPath,
       segments,
       subtitles: subtitlesForExport,
@@ -1348,8 +1348,8 @@ videoPlayhead.addEventListener('pointerup', endPlayheadScrub);
 videoPlayhead.addEventListener('pointercancel', endPlayheadScrub);
 
 chooseFileBtn.addEventListener('click', async () => {
-  if (quickCutAPI?.chooseVideo) {
-    const filePath = await quickCutAPI.chooseVideo();
+  if (zubaAPI?.chooseVideo) {
+    const filePath = await zubaAPI.chooseVideo();
     if (filePath) {
       openVideoFromPath(filePath);
       return;
@@ -1425,7 +1425,7 @@ exportCutsBtn.addEventListener('click', () => {
 openExportBtn.addEventListener('click', async () => {
   if (!lastExportPath) return;
   try {
-    await quickCutAPI?.openPath(lastExportPath);
+    await zubaAPI?.openPath(lastExportPath);
   } catch (error) {
     setExportStatus(error instanceof Error ? error.message : 'ファイルを開けませんでした', 'error');
   }
@@ -1449,7 +1449,7 @@ document.addEventListener('paste', (event) => {
   handlePathText(text);
 });
 
-quickCutAPI?.onExternalFile((filePath) => {
+zubaAPI?.onExternalFile((filePath) => {
   openVideoFromPath(filePath);
 });
 

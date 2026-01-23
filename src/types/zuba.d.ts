@@ -39,7 +39,7 @@ export type ExportSegmentsResult = {
   canceled?: boolean;
 };
 
-export type QuickCutAPI = {
+export type ZubaAPI = {
   chooseVideo: () => Promise<string | null>;
   pathToFileUrl: (filePath: string) => string | null;
   onExternalFile: (callback: (filePath: string) => void) => void;
@@ -49,7 +49,7 @@ export type QuickCutAPI = {
 
 declare global {
   interface Window {
-    quickCutAPI?: QuickCutAPI;
+    zubaAPI?: ZubaAPI;
   }
 }
 

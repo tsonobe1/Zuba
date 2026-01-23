@@ -1,5 +1,5 @@
 {
-  "name": "quick-cut",
+  "name": "zuba",
   "version": "0.2.0",
   "description": "Minimal desktop app for video cutting and subtitle styling.",
   "main": "dist/main/main.js",
@@ -14,8 +14,8 @@
     "package": "pnpm run build && electron-builder -mwl"
   },
   "build": {
-    "appId": "com.quickcut.editor",
-    "productName": "QuickCut",
+    "appId": "com.zuba.editor",
+    "productName": "Zuba",
     "files": [
       "dist/**/*",
       "package.json"

@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs/promises';
 import { spawn } from 'child_process';
-import type { ExportSegmentsPayload, SegmentRange, SubtitleExportPayload } from '../types/quickcut';
+import type { ExportSegmentsPayload, SegmentRange, SubtitleExportPayload } from '../types/zuba';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -14,7 +14,7 @@ const createWindow = () => {
     minWidth: 960,
     minHeight: 600,
     backgroundColor: '#1b1b1b',
-    title: 'QuickCut',
+    title: 'Zuba',
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
@@ -143,7 +143,7 @@ const exportSegmentsWithFfmpeg = async (
   outputPath: string,
   options?: { subtitles?: SubtitleExportPayload[]; videoWidth?: number; videoHeight?: number }
 ) => {
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'quickcut-'));
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'zuba-'));
   const chunkPaths: string[] = [];
   try {
     for (let index = 0; index < segments.length; index += 1) {

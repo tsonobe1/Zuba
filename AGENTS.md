@@ -1,7 +1,7 @@
 # AGENTS
 
 ## プロジェクト概要
-- **QuickCut**: Electron + TypeScript 製のデスクトップ動画カッティング / 字幕付けアプリ。
+- **Zuba**: Electron + TypeScript 製のデスクトップ動画カッティング / 字幕付けアプリ。
 - Windows / macOS の両 OS で動作。動画のドラッグ＆ドロップ、ペースト、ファイルダイアログに対応。
 - Enter で現在位置をカット、Delete で選択カットあるいは字幕を削除。Undo/Redo（Cmd/Ctrl+Z / Shift+Cmd/Ctrl+Z・Y・ボタン）も実装。
 - 字幕は複数同時表示、タイムライン上でドラッグやハンドルによるリサイズ、プレーヤー上でのインライン編集に対応。背景色・文字色・フォント・サイズ・配置を個別に保持。
@@ -9,7 +9,7 @@
 
 ## 主なディレクトリ
 - `src/main/`: Electron メインプロセス（ウインドウ作成・ffmpeg 呼び出し・IPC）。
-- `src/preload/`: レンダラに渡す IPC ブリッジ (`quickCutAPI`)。
+- `src/preload/`: レンダラに渡す IPC ブリッジ (`zubaAPI`)。
 - `src/renderer/`: UI ロジック（動画ビューア、タイムライン、字幕編集）。
 - `tests/`: Vitest の古典学派テスト（`subtitleUtils`）。
 - `log/`: デバッグ用途で最新の `subtitles-*.ass` を保存（git では無視）。

@@ -8,6 +8,7 @@ import {
   DEFAULT_SUBTITLE_POSITION,
   SubtitlePosition
 } from './utils/subtitle.js';
+import { extractVideoPathFromText } from './utils/filePath.js';
 
 const ensureElement = <T extends Element>(selector: string): T => {
   const element = document.querySelector(selector);
@@ -86,6 +87,7 @@ const state: AppState = {
 let objectUrl: string | null = null;
 const zubaAPI: ZubaAPI | undefined = window.zubaAPI;
 let overlayEditingId: string | null = null;
+let dropZoneDragDepth = 0;
 
 const defaultStyles: SubtitleStyles = {
   fontColor: '#ffffff',
@@ -371,48 +373,67 @@ const setVideoSource = (src: string) => {
   resetState();
 };
 
-const openVideoFromFile = (file: File) => {
+const openVideoFromFile = async (file: File) => {
   if (!file) return;
+  if (zubaAPI?.cacheVideoFile) {
+    try {
+      setExportStatus('動画を読み込んでいます...', 'progress');
+      const buffer = await file.arrayBuffer();
+      const cachedPath = await zubaAPI.cacheVideoFile(file.name || 'video', buffer);
+      if (cachedPath) {
+        openVideoFromPath(cachedPath, file.name || 'Untitled');
+        setExportStatus('');
+        return;
+      }
+    } catch (error) {
+      console.error('[renderer] failed to cache temp video', error);
+      setExportStatus('動画の一時保存に失敗しました', 'error');
+    }
+  }
   cleanupObjectUrl();
   objectUrl = URL.createObjectURL(file);
   state.videoName = file.name || 'Untitled';
   state.videoPath = null;
   videoNameLabel.textContent = state.videoName;
   setVideoSource(objectUrl);
+  setExportStatus('この取り込み方法では書き出しは無効です。ファイルパスを貼り付けてください。', 'error');
 };
 
-const openVideoFromPath = (filePath: string) => {
+const openVideoFromPath = (filePath: string, displayName?: string) => {
   if (!filePath || !zubaAPI?.pathToFileUrl) return;
   cleanupObjectUrl();
   const fileUrl = zubaAPI.pathToFileUrl(filePath);
   if (!fileUrl) return;
-  state.videoName = filePath.split(/[/\\]/).pop() ?? 'Untitled';
+  state.videoName = displayName ?? filePath.split(/[/\\]/).pop() ?? 'Untitled';
   state.videoPath = filePath;
   videoNameLabel.textContent = state.videoName;
   setVideoSource(fileUrl);
 };
 
-const handleFiles = (fileList: FileList | null) => {
+const handleFiles = async (fileList: FileList | null) => {
   if (!fileList || fileList.length === 0) return;
   const fileArray = Array.from(fileList);
   const file = fileArray.find((f) => f.type.startsWith('video')) ?? fileArray[0];
   const fileWithPath = file as File & { path?: string };
-  if (fileWithPath.path && zubaAPI?.pathToFileUrl) {
-    openVideoFromPath(fileWithPath.path);
-  } else {
-    openVideoFromFile(file);
+  try {
+    if (fileWithPath.path && zubaAPI?.pathToFileUrl) {
+      openVideoFromPath(fileWithPath.path, file.name);
+      return;
+    }
+    await openVideoFromFile(file);
+  } catch (error) {
+    console.error('[renderer] failed to handle dropped file', error);
+    setExportStatus('動画の読み込みに失敗しました', 'error');
   }
 };
 
 const handlePathText = (text: string | null | undefined) => {
-  if (!text) return false;
-  const trimmed = text.trim();
-  const isLikelyVideo = /(\.mp4|\.mov|\.mkv|\.avi|\.webm)$/i.test(trimmed);
-  if (isLikelyVideo) {
-    const normalized = trimmed.replace(/^file:\/\//i, '');
-    openVideoFromPath(normalized);
+  const parsedPath = extractVideoPathFromText(text ?? '');
+  if (!parsedPath) {
+    return false;
   }
-  return isLikelyVideo;
+  openVideoFromPath(parsedPath);
+  return true;
 };
 
 const updateSegmentList = () => {
@@ -1366,12 +1387,14 @@ hiddenFileInput.addEventListener('change', (event) => {
 
 const handleDragEnter = (event: DragEvent) => {
   event.preventDefault();
+  dropZoneDragDepth += 1;
   dropZone.classList.add('dragging');
 };
 
 const handleDragLeave = (event: DragEvent) => {
   event.preventDefault();
-  if (event.target === dropZone) {
+  dropZoneDragDepth = Math.max(0, dropZoneDragDepth - 1);
+  if (dropZoneDragDepth === 0) {
     dropZone.classList.remove('dragging');
   }
 };
@@ -1380,6 +1403,7 @@ dropZone.addEventListener('dragover', handleDragEnter);
 dropZone.addEventListener('dragleave', handleDragLeave);
 dropZone.addEventListener('drop', (event) => {
   event.preventDefault();
+  dropZoneDragDepth = 0;
   dropZone.classList.remove('dragging');
   handleFiles(event.dataTransfer?.files ?? null);
 });
@@ -1456,11 +1480,19 @@ zubaAPI?.onExternalFile((filePath) => {
 subtitleForm.addEventListener('submit', upsertSubtitle);
 clearSubtitleFormBtn.addEventListener('click', clearSubtitleForm);
 
+const shouldIgnoreGlobalShortcut = (element: HTMLElement | null) => {
+  if (!element) return false;
+  if (element.isContentEditable) {
+    return true;
+  }
+  return Boolean(element.closest('input, textarea, select, button, [contenteditable="true"]'));
+};
+
 const handleGlobalKey = (event: KeyboardEvent) => {
   const target = event.target as HTMLElement | null;
-  const tag = target?.tagName;
-  const typing = tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable;
-  if (typing) return;
+  if (shouldIgnoreGlobalShortcut(target)) {
+    return;
+  }
 
   const meta = event.metaKey || event.ctrlKey;
   if (meta && event.key.toLowerCase() === 'z') {

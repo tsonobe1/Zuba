@@ -6,6 +6,28 @@ import { spawn } from 'child_process';
 import type { ExportSegmentsPayload, SegmentRange, SubtitleExportPayload } from '../types/zuba';
 
 let mainWindow: BrowserWindow | null = null;
+let sessionCacheDir: string | null = null;
+
+const ensureSessionCacheDir = async () => {
+  if (sessionCacheDir) {
+    return sessionCacheDir;
+  }
+  sessionCacheDir = await fs.mkdtemp(path.join(os.tmpdir(), 'zuba-cache-'));
+  return sessionCacheDir;
+};
+
+const sanitizeCacheFileName = (fileName: string) => fileName.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
+
+const cleanupSessionCacheDir = async () => {
+  if (!sessionCacheDir) return;
+  try {
+    await fs.rm(sessionCacheDir, { recursive: true, force: true });
+  } catch (error) {
+    console.warn('[cache] failed to remove temp cache directory', error);
+  } finally {
+    sessionCacheDir = null;
+  }
+};
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({
@@ -361,6 +383,25 @@ app.whenReady().then(() => {
     }
     await shell.openPath(filePath);
   });
+  ipcMain.handle('video:cacheTempFile', async (_event, payload: { fileName?: string; data?: Buffer }) => {
+    try {
+      const data = payload?.data;
+      if (!data || !Buffer.isBuffer(data)) {
+        throw new Error('動画データが取得できませんでした');
+      }
+      const cacheDir = await ensureSessionCacheDir();
+      const requestedName = typeof payload?.fileName === 'string' && payload.fileName.trim() ? payload.fileName.trim() : 'video';
+      const ext = path.extname(requestedName) || '.mp4';
+      const safeBaseName = sanitizeCacheFileName(path.basename(requestedName, ext)) || 'clip';
+      const uniqueName = `${safeBaseName}-${Date.now()}${ext}`;
+      const targetPath = path.join(cacheDir, uniqueName);
+      await fs.writeFile(targetPath, data);
+      return targetPath;
+    } catch (error) {
+      console.error('[cache] failed to persist temp video', error);
+      return null;
+    }
+  });
 
   ipcMain.handle('video:exportCuts', async (_event, payload: ExportSegmentsPayload) => {
     try {
@@ -449,4 +490,10 @@ app.on('open-file', (event, filePath) => {
       }
     });
   }
+});
+
+app.on('will-quit', () => {
+  cleanupSessionCacheDir().catch(() => {
+    /* noop */
+  });
 });

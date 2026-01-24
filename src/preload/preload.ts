@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { Buffer } from 'buffer';
 import { pathToFileURL } from 'url';
 import type { ExportSegmentsPayload, ZubaAPI } from '../types/zuba';
 
@@ -13,7 +14,14 @@ const api: ZubaAPI = {
     });
   },
   exportCuts: (payload: ExportSegmentsPayload) => ipcRenderer.invoke('video:exportCuts', payload),
-  openPath: (filePath: string) => ipcRenderer.invoke('file:openPath', filePath)
+  openPath: (filePath: string) => ipcRenderer.invoke('file:openPath', filePath),
+  cacheVideoFile: async (fileName: string, data: ArrayBuffer) => {
+    const buffer = Buffer.from(data);
+    return ipcRenderer.invoke('video:cacheTempFile', {
+      fileName,
+      data: buffer
+    });
+  }
 };
 
 contextBridge.exposeInMainWorld('zubaAPI', api);

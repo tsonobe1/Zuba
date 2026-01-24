@@ -45,6 +45,7 @@ export type ZubaAPI = {
   onExternalFile: (callback: (filePath: string) => void) => void;
   exportCuts: (payload: ExportSegmentsPayload) => Promise<ExportSegmentsResult>;
   openPath: (filePath: string) => Promise<void>;
+  cacheVideoFile: (fileName: string, data: ArrayBuffer) => Promise<string | null>;
 };
 
 declare global {

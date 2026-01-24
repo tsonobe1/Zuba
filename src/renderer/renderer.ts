@@ -56,6 +56,15 @@ const subtitleTrackEmpty = ensureElement<HTMLDivElement>('#subtitleTrackEmpty');
 const subtitleTrackStartLabel = ensureElement<HTMLSpanElement>('#subtitleTrackStart');
 const subtitleTrackEndLabel = ensureElement<HTMLSpanElement>('#subtitleTrackEnd');
 
+const setChooseFileButtonVisibility = (visible: boolean) => {
+  if (visible) {
+    chooseFileBtn.hidden = false;
+    chooseFileBtn.textContent = '別の動画を開く';
+  } else {
+    chooseFileBtn.hidden = true;
+  }
+};
+
 subtitleOverlay.tabIndex = 0;
 subtitleOverlay.setAttribute('role', 'textbox');
 subtitleOverlay.setAttribute('aria-label', '再生中の字幕');
@@ -366,10 +375,19 @@ const cleanupObjectUrl = () => {
   }
 };
 
+const clearLoadedVideo = () => {
+  cleanupObjectUrl();
+  if (video.src) {
+    video.removeAttribute('src');
+    video.load();
+  }
+};
+
 const setVideoSource = (src: string) => {
   if (!src) return;
   video.src = src;
   dropHint.style.display = 'none';
+  setChooseFileButtonVisibility(true);
   resetState();
 };
 
@@ -613,6 +631,10 @@ const deleteSelectedSegment = () => {
   if (index === -1) return;
   pushUndoSnapshot();
   state.segments.splice(index, 1);
+  if (state.segments.length === 0) {
+    clearLoadedVideo();
+    return;
+  }
   const fallback = state.segments[index] ?? state.segments[index - 1] ?? null;
   state.selectedSegmentId = fallback?.id ?? null;
   refreshSegmentsUI();
@@ -1292,6 +1314,8 @@ video.addEventListener('emptied', () => {
   state.segments = [];
   state.selectedSegmentId = null;
   state.videoPath = null;
+  state.videoName = '';
+  videoNameLabel.textContent = '未選択';
   lastExportPath = null;
   resetHistoryStacks();
   refreshSegmentsUI();
@@ -1300,6 +1324,7 @@ video.addEventListener('emptied', () => {
   setExportStatus('');
   updateExportButtonState();
   updateExportOpenButton();
+  setChooseFileButtonVisibility(false);
 });
 
 videoTrack.addEventListener('pointerdown', (event) => {

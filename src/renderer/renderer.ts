@@ -1023,7 +1023,7 @@ const renderSubtitleTrack = () => {
     block.addEventListener('click', (event) => {
       event.stopPropagation();
       if (block.dataset.dragSkip === 'true' || block.dataset.resizeSkip === 'true') return;
-      beginSubtitleEditing(subtitle, { focusText: true, scrollIntoView: true });
+      beginSubtitleEditing(subtitle, { focusText: false, scrollIntoView: true });
     });
     const leftHandle = document.createElement('div');
     leftHandle.className = 'subtitle-handle left';
@@ -1543,12 +1543,12 @@ const handleGlobalKey = (event: KeyboardEvent) => {
 
   if (event.key === 'Delete') {
     event.preventDefault();
-    if (state.selectedSegmentId) {
-      deleteSelectedSegment();
-      return;
-    }
     if (state.selectedSubtitleId) {
       deleteSelectedSubtitle();
+      return;
+    }
+    if (state.selectedSegmentId) {
+      deleteSelectedSegment();
     }
   }
 };

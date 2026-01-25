@@ -1415,8 +1415,7 @@ hiddenFileInput.addEventListener('change', (event) => {
   hiddenFileInput.value = '';
 });
 
-const handleDragEnter = (event: DragEvent) => {
-  event.preventDefault();
+const handleDragEnter = () => {
   dropZoneDragDepth += 1;
   dropZone.classList.add('dragging');
 };
@@ -1429,7 +1428,12 @@ const handleDragLeave = (event: DragEvent) => {
   }
 };
 
-dropZone.addEventListener('dragover', handleDragEnter);
+const handleDragOver = (event: DragEvent) => {
+  event.preventDefault();
+};
+
+dropZone.addEventListener('dragenter', handleDragEnter);
+dropZone.addEventListener('dragover', handleDragOver);
 dropZone.addEventListener('dragleave', handleDragLeave);
 dropZone.addEventListener('drop', (event) => {
   event.preventDefault();

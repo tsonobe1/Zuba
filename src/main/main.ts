@@ -7,6 +7,33 @@ import type { ExportSegmentsPayload, SegmentRange, SubtitleExportPayload } from 
 
 let mainWindow: BrowserWindow | null = null;
 let sessionCacheDir: string | null = null;
+let pendingExternalFilePath: string | null = null;
+
+const flushPendingExternalFilePath = () => {
+  if (!pendingExternalFilePath || !mainWindow) {
+    return;
+  }
+  const sendToRenderer = () => {
+    if (!pendingExternalFilePath || !mainWindow) {
+      return;
+    }
+    mainWindow.webContents.send('video:file-opened-externally', pendingExternalFilePath);
+    pendingExternalFilePath = null;
+  };
+  if (mainWindow.webContents.isLoading()) {
+    mainWindow.webContents.once('did-finish-load', sendToRenderer);
+  } else {
+    sendToRenderer();
+  }
+};
+
+const queueExternalFilePath = (filePath: string) => {
+  if (!filePath) {
+    return;
+  }
+  pendingExternalFilePath = filePath;
+  flushPendingExternalFilePath();
+};
 
 const ensureSessionCacheDir = async () => {
   if (sessionCacheDir) {
@@ -46,6 +73,8 @@ const createWindow = () => {
   });
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+
+  flushPendingExternalFilePath();
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -484,15 +513,7 @@ app.on('window-all-closed', () => {
 
 app.on('open-file', (event, filePath) => {
   event.preventDefault();
-  if (mainWindow) {
-    mainWindow.webContents.send('video:file-opened-externally', filePath);
-  } else {
-    app.once('browser-window-created', () => {
-      if (mainWindow) {
-        mainWindow.webContents.send('video:file-opened-externally', filePath);
-      }
-    });
-  }
+  queueExternalFilePath(filePath);
 });
 
 app.on('will-quit', () => {

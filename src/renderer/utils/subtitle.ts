@@ -62,9 +62,11 @@ export const normalizeRange = (start: number, end: number): { start: number; end
   if (!Number.isFinite(start) || !Number.isFinite(end)) {
     return { start: 0, end: 0 };
   }
+  const min = Math.min(start, end);
+  const max = Math.max(start, end);
   return {
-    start: Math.min(start, end),
-    end: Math.max(start, end)
+    start: Math.max(0, min),
+    end: Math.max(0, max)
   };
 };
 

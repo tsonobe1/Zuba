@@ -42,7 +42,7 @@ export type ExportSegmentsResult = {
 export type ZubaAPI = {
   chooseVideo: () => Promise<string | null>;
   pathToFileUrl: (filePath: string) => string | null;
-  onExternalFile: (callback: (filePath: string) => void) => void;
+  onExternalFile: (callback: (filePath: string) => void) => () => void;
   exportCuts: (payload: ExportSegmentsPayload) => Promise<ExportSegmentsResult>;
   openPath: (filePath: string) => Promise<void>;
   cacheVideoFile: (fileName: string, data: ArrayBuffer) => Promise<string | null>;

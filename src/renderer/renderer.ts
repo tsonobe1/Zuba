@@ -604,7 +604,6 @@ const addCutAtCurrentTime = () => {
   const time = clamp(video.currentTime || 0, 0, duration);
   const targetIndex = state.segments.findIndex((segment) => time > segment.start + CUT_EPSILON && time < segment.end - CUT_EPSILON);
   if (targetIndex === -1) return;
-  pushUndoSnapshot();
   const target = state.segments[targetIndex];
   const firstHalf: VideoSegment = {
     ...target,
@@ -618,6 +617,7 @@ const addCutAtCurrentTime = () => {
   if (secondHalf.end - secondHalf.start < MIN_SEGMENT_DURATION || firstHalf.end - firstHalf.start < MIN_SEGMENT_DURATION) {
     return;
   }
+  pushUndoSnapshot();
   state.segments.splice(targetIndex, 1, firstHalf, secondHalf);
   state.selectedSegmentId = secondHalf.id;
   refreshSegmentsUI();
@@ -705,7 +705,12 @@ const renderSubtitleList = () => {
     .sort((a, b) => a.start - b.start)
     .forEach((item) => {
       const li = document.createElement('li');
-      li.innerHTML = `<span>${formatTime(item.start)} → ${formatTime(item.end)}</span><span>${item.text || '（無題）'}</span>`;
+      const timeSpan = document.createElement('span');
+      timeSpan.textContent = `${formatTime(item.start)} → ${formatTime(item.end)}`;
+      const textSpan = document.createElement('span');
+      textSpan.textContent = item.text || '（無題）';
+      li.appendChild(timeSpan);
+      li.appendChild(textSpan);
       if (item.id === state.selectedSubtitleId) {
         li.classList.add('active');
       }

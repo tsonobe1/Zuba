@@ -9,9 +9,15 @@ const api: ZubaAPI = {
   chooseVideo: () => ipcRenderer.invoke('dialog:chooseVideo'),
   pathToFileUrl: (filePath: string) => (filePath ? pathToFileURL(filePath).href : null),
   onExternalFile: (callback: ExternalFileCallback) => {
-    ipcRenderer.on('video:file-opened-externally', (_event, filePath: string) => {
+    const listener = (_event: Electron.IpcRendererEvent, filePath: string) => {
       callback(filePath);
-    });
+    };
+
+    ipcRenderer.on('video:file-opened-externally', listener);
+
+    return () => {
+      ipcRenderer.removeListener('video:file-opened-externally', listener);
+    };
   },
   exportCuts: (payload: ExportSegmentsPayload) => ipcRenderer.invoke('video:exportCuts', payload),
   openPath: (filePath: string) => ipcRenderer.invoke('file:openPath', filePath),

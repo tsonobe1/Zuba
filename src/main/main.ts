@@ -381,7 +381,10 @@ app.whenReady().then(() => {
     if (!filePath) {
       throw new Error('ファイルパスが指定されていません');
     }
-    await shell.openPath(filePath);
+    const errorMessage = await shell.openPath(filePath);
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
   });
   ipcMain.handle('video:cacheTempFile', async (_event, payload: { fileName?: string; data?: Buffer }) => {
     try {

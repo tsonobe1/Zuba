@@ -43,7 +43,7 @@ const ensureSessionCacheDir = async () => {
   return sessionCacheDir;
 };
 
-const sanitizeCacheFileName = (fileName: string) => fileName.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
+const sanitizeCacheFileName = (fileName: string) => fileName.replace(/[<>:"\/\\|?*\p{Cc}]/gu, '_');
 
 const cleanupSessionCacheDir = async () => {
   if (!sessionCacheDir) return;

@@ -241,15 +241,19 @@ const exportSegmentsWithFfmpeg = async (
     if (subtitles.length > 0) {
       const assPath = path.join(tempDir, 'subtitles.ass');
       await createAssFile(subtitles, assPath, { width: options?.videoWidth, height: options?.videoHeight });
-      try {
-        const logDir = path.join(process.cwd(), 'log');
-        await fs.mkdir(logDir, { recursive: true });
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const debugAssPath = path.join(logDir, `subtitles-${timestamp}.ass`);
-        await fs.copyFile(assPath, debugAssPath);
-        console.log(`[subtitles] copied ASS to ${debugAssPath}`);
-      } catch (error) {
-        console.warn('[subtitles] failed to save ASS for debugging', error);
+
+      const isDev = process.env.NODE_ENV !== 'production' || !app.isPackaged;
+      if (isDev) {
+        try {
+          const logDir = path.join(process.cwd(), 'log');
+          await fs.mkdir(logDir, { recursive: true });
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const debugAssPath = path.join(logDir, `subtitles-${timestamp}.ass`);
+          await fs.copyFile(assPath, debugAssPath);
+          console.log(`[subtitles] copied ASS to ${debugAssPath}`);
+        } catch (error) {
+          console.warn('[subtitles] failed to save ASS for debugging', error);
+        }
       }
       const escapedAss = assPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
       const filterArg = `subtitles=filename='${escapedAss}'`;

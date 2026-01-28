@@ -7,23 +7,31 @@ import type { ExportSegmentsPayload, SegmentRange, SubtitleExportPayload } from 
 
 let mainWindow: BrowserWindow | null = null;
 let sessionCacheDir: string | null = null;
-let pendingExternalFilePath: string | null = null;
+const pendingExternalFilePaths: string[] = [];
 
-const flushPendingExternalFilePath = () => {
-  if (!pendingExternalFilePath || !mainWindow) {
+const flushPendingExternalFilePaths = () => {
+  if (pendingExternalFilePaths.length === 0 || !mainWindow) {
     return;
   }
-  const sendToRenderer = () => {
-    if (!pendingExternalFilePath || !mainWindow) {
+
+  const sendNext = () => {
+    if (pendingExternalFilePaths.length === 0 || !mainWindow) {
       return;
     }
-    mainWindow.webContents.send('video:file-opened-externally', pendingExternalFilePath);
-    pendingExternalFilePath = null;
+    const filePath = pendingExternalFilePaths.shift();
+    if (filePath) {
+      mainWindow.webContents.send('video:file-opened-externally', filePath);
+    }
+    // Process remaining items in the queue
+    if (pendingExternalFilePaths.length > 0) {
+      flushPendingExternalFilePaths();
+    }
   };
+
   if (mainWindow.webContents.isLoading()) {
-    mainWindow.webContents.once('did-finish-load', sendToRenderer);
+    mainWindow.webContents.once('did-finish-load', sendNext);
   } else {
-    sendToRenderer();
+    sendNext();
   }
 };
 
@@ -31,8 +39,8 @@ const queueExternalFilePath = (filePath: string) => {
   if (!filePath) {
     return;
   }
-  pendingExternalFilePath = filePath;
-  flushPendingExternalFilePath();
+  pendingExternalFilePaths.push(filePath);
+  flushPendingExternalFilePaths();
 };
 
 const ensureSessionCacheDir = async () => {
@@ -74,7 +82,7 @@ const createWindow = () => {
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 
-  flushPendingExternalFilePath();
+  flushPendingExternalFilePaths();
 
   mainWindow.on('closed', () => {
     mainWindow = null;

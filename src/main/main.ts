@@ -263,7 +263,7 @@ const exportSegmentsWithFfmpeg = async (
           console.warn('[subtitles] failed to save ASS for debugging', error);
         }
       }
-      const escapedAss = assPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const escapedAss = assPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/:/g, '\\:');
       const filterArg = `subtitles=filename='${escapedAss}'`;
       const encodeArgs = [
         '-y',

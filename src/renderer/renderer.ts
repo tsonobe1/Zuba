@@ -1497,7 +1497,20 @@ redoBtn.addEventListener('click', () => {
   redoLastUndo();
 });
 
+const shouldIgnoreGlobalShortcut = (element: HTMLElement | null) => {
+  if (!element) return false;
+  if (element.isContentEditable) {
+    return true;
+  }
+  return Boolean(element.closest('input, textarea, select, button, [contenteditable="true"]'));
+};
+
 document.addEventListener('paste', (event) => {
+  const target = event.target as HTMLElement | null;
+  if (shouldIgnoreGlobalShortcut(target)) {
+    return;
+  }
+
   const files = event.clipboardData?.files;
   if (files && files.length > 0) {
     handleFiles(files);
@@ -1513,14 +1526,6 @@ zubaAPI?.onExternalFile((filePath) => {
 
 subtitleForm.addEventListener('submit', upsertSubtitle);
 clearSubtitleFormBtn.addEventListener('click', clearSubtitleForm);
-
-const shouldIgnoreGlobalShortcut = (element: HTMLElement | null) => {
-  if (!element) return false;
-  if (element.isContentEditable) {
-    return true;
-  }
-  return Boolean(element.closest('input, textarea, select, button, [contenteditable="true"]'));
-};
 
 const handleGlobalKey = (event: KeyboardEvent) => {
   const target = event.target as HTMLElement | null;
